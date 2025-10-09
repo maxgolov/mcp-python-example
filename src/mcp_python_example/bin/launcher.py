@@ -7,7 +7,7 @@ Manages starting, stopping, and checking status of the MCP server process.
 import logging
 import os
 import platform
-import subprocess
+import subprocess  # nosec B404 - subprocess needed for process management
 import sys
 import time
 from pathlib import Path
@@ -90,6 +90,7 @@ def start_server(host: str, port: int) -> None:
         # Platform-specific process creation
         if is_windows():
             # Windows: Use CREATE_NEW_PROCESS_GROUP to detach
+            # nosec B603 - safe subprocess usage with validated arguments, no shell execution
             process = subprocess.Popen(
                 cmd,
                 stdout=log_file,
@@ -101,6 +102,7 @@ def start_server(host: str, port: int) -> None:
             )
         else:
             # Unix: Use start_new_session to detach
+            # nosec B603 - safe subprocess usage with validated arguments, no shell execution
             process = subprocess.Popen(
                 cmd,
                 stdout=log_file,
