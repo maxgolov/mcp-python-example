@@ -92,7 +92,7 @@ class McpExampleServer:
             ]
 
         @self.app.call_tool()  # type: ignore[misc]
-        async def call_tool(name: str, arguments: dict[str, Any], ctx: Any) -> list[types.ContentBlock]:
+        async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.ContentBlock]:
             """Handle tool calls."""
 
             if name == "increment":
@@ -107,16 +107,19 @@ class McpExampleServer:
                 return [types.TextContent(type="text", text="Counter reset to 0")]
 
             elif name == "test_sampling":
-                return await self._handle_sampling(ctx)
+                return await self._handle_sampling()
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
-    async def _handle_sampling(self, ctx: Any) -> list[types.ContentBlock]:
+    async def _handle_sampling(self) -> list[types.ContentBlock]:
         """Handle MCP sampling test - asks the LLM to say 'Hi'."""
         logger.info("🔔 Sampling test requested - asking LLM to say 'Hi'")
 
         try:
+            # Get the request context
+            ctx = self.app.request_context
+            
             # Request the client to perform LLM sampling
             sampling_result = await ctx.session.create_message(
                 messages=[
