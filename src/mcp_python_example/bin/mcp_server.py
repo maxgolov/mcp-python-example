@@ -248,10 +248,11 @@ async def dashboard(request: Request) -> HTMLResponse:
 
 
 @click.command()
-@click.option("--port", default=8080, help="Port to bind the server to")
-@click.option("--host", default="127.0.0.1", help="Host to bind the server to")
+@click.option("--port", default=None, type=int, help="Port to bind the server to (default: from config or 8080)")
+@click.option("--host", default=None, help="Host to bind the server to (default: from config or 127.0.0.1)")
 @click.option("--log-level", default="INFO", help="Logging level")
-def main(port: int, host: str, log_level: str) -> None:
+@click.option("--no-auth", is_flag=True, help="Disable authentication")
+def main(port: int | None, host: str | None, log_level: str, no_auth: bool) -> None:
     """Main MCP server entry point."""
 
     # Configure logging
@@ -262,14 +263,42 @@ def main(port: int, host: str, log_level: str) -> None:
     logger.info("Starting MCP Python Example Server...")
     logger.info("Using official Python MCP SDK from https://github.com/modelcontextprotocol/python-sdk")
 
-    # Load authentication configuration
+    # Load configuration from etc/config.ini
+    config_port = 8080
+    config_host = "127.0.0.1"
+    
     try:
-        auth_config = AuthConfig.load()
-        logger.info(f"🔐 Authentication enabled with {len(auth_config.authorized_tokens)} authorized users")
-    except (FileNotFoundError, ValueError) as e:
-        logger.warning(f"⚠️ Failed to load auth config: {e}. Running WITHOUT authentication!")
-        logger.warning("⚠️ To enable authentication, create etc/config.ini using token-manager")
-        auth_config = None
+        import configparser
+        from pathlib import Path
+        
+        config_file = Path("etc/config.ini")
+        if config_file.exists():
+            config = configparser.ConfigParser()
+            config.read(config_file)
+            
+            if "server" in config:
+                config_port = config.getint("server", "port", fallback=8080)
+                config_host = config.get("server", "host", fallback="127.0.0.1")
+                logger.info(f"📄 Loaded config from {config_file}")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not read config file: {e}")
+    
+    # CLI arguments override config
+    final_port = port if port is not None else config_port
+    final_host = host if host is not None else config_host
+
+    # Load authentication configuration
+    auth_config = None
+    if not no_auth:
+        try:
+            auth_config = AuthConfig.load()
+            logger.info(f"🔐 Authentication enabled with {len(auth_config.authorized_tokens)} authorized users")
+        except (FileNotFoundError, ValueError) as e:
+            logger.warning(f"⚠️ Failed to load auth config: {e}. Running WITHOUT authentication!")
+            logger.warning("⚠️ To enable authentication, create etc/config.ini using token-manager")
+            auth_config = None
+    else:
+        logger.info("⚠️ Authentication disabled via --no-auth flag")
 
     # Create MCP server instance
     mcp_server = McpExampleServer()
@@ -340,7 +369,7 @@ def main(port: int, host: str, log_level: str) -> None:
         expose_headers=["Mcp-Session-Id"],
     )
 
-    bind_address = f"{host}:{port}"
+    bind_address = f"{final_host}:{final_port}"
 
     # Log startup information
     logger.info(f"🚀 Combined MCP + Web Server running on http://{bind_address}")
@@ -371,7 +400,7 @@ def main(port: int, host: str, log_level: str) -> None:
     # Start server
     import uvicorn
 
-    uvicorn.run(app, host=host, port=port, log_level=log_level.lower())
+    uvicorn.run(app, host=final_host, port=final_port, log_level=log_level.lower())
 
 
 if __name__ == "__main__":
