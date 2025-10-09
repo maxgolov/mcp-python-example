@@ -119,7 +119,7 @@ class McpExampleServer:
         try:
             # Access the request context from the Server instance
             ctx = self.app.request_context
-            
+
             # Request the client to perform LLM sampling
             logger.info("📤 Sending sampling request to client...")
             sampling_result = await ctx.session.create_message(
@@ -128,8 +128,11 @@ class McpExampleServer:
                         role="user",
                         content=types.TextContent(
                             type="text",
-                            text="Please say 'Hi' in a friendly and creative way! Also tell me what model you are. Be brief (1-2 sentences)."
-                        )
+                            text=(
+                                "Please say 'Hi' in a friendly and creative way! "
+                                "Also tell me what model you are. Be brief (1-2 sentences)."
+                            ),
+                        ),
                     )
                 ],
                 max_tokens=150,
@@ -141,7 +144,7 @@ class McpExampleServer:
                 llm_response = sampling_result.content.text
             else:
                 llm_response = str(sampling_result.content)
-            
+
             logger.info(f"✅ LLM sampling successful! Model: {sampling_result.model}")
 
             return [
@@ -305,23 +308,23 @@ def main(port: int | None, host: str | None, log_level: str, no_auth: bool) -> N
     # Load configuration from etc/config.ini
     config_port = 8080
     config_host = "127.0.0.1"
-    
+
     try:
         import configparser
         from pathlib import Path
-        
+
         config_file = Path("etc/config.ini")
         if config_file.exists():
             config = configparser.ConfigParser()
             config.read(config_file)
-            
+
             if "server" in config:
                 config_port = config.getint("server", "port", fallback=8080)
                 config_host = config.get("server", "host", fallback="127.0.0.1")
                 logger.info(f"📄 Loaded config from {config_file}")
     except Exception as e:
         logger.warning(f"⚠️ Could not read config file: {e}")
-    
+
     # CLI arguments override config
     final_port = port if port is not None else config_port
     final_host = host if host is not None else config_host
