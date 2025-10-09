@@ -120,7 +120,8 @@ jobs:
         python -m mcp_python_example.bin.mcp_server --help
         python -m mcp_python_example.bin.mcp_client --help
 
-    - name: Build artifacts summary
+    - name: Build artifacts summary (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
       run: |
         echo "### Build Artifacts" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -151,6 +152,21 @@ jobs:
         else
           echo "| mcp-client | X Failed |" >> $GITHUB_STEP_SUMMARY
         fi
+
+    - name: Build artifacts summary (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        "### Build Artifacts" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+        "" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+        "| Component | Status |" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+        "|-----------|--------|" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+        
+        # Check if binaries work
+        try { python -m mcp_python_example.bin.mcp_server --help 2>$null | Out-Null; "| mcp-server | OK Working |" | Out-File -Append $env:GITHUB_STEP_SUMMARY } catch { "| mcp-server | X Failed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY }
+        try { python -m mcp_python_example.bin.launcher --help 2>$null | Out-Null; "| launcher | OK Working |" | Out-File -Append $env:GITHUB_STEP_SUMMARY } catch { "| launcher | X Failed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY }
+        try { python -m mcp_python_example.bin.token_manager --help 2>$null | Out-Null; "| token-manager | OK Working |" | Out-File -Append $env:GITHUB_STEP_SUMMARY } catch { "| token-manager | X Failed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY }
+        try { python -m mcp_python_example.bin.mcp_client --help 2>$null | Out-Null; "| mcp-client | OK Working |" | Out-File -Append $env:GITHUB_STEP_SUMMARY } catch { "| mcp-client | X Failed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY }
 
   security-audit:
     name: Security Audit
