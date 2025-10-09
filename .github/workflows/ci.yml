@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHONUNBUFFERED: 1
+  PYTHONDONTWRITEBYTECODE: 1
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build
+
+    - name: Install Python dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build
+
+    - name: Create virtual environment
+      run: python -m venv .venv
+
+    - name: Activate virtual environment (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
+      run: |
+        source .venv/bin/activate
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
+    - name: Activate virtual environment (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        .venv\Scripts\Activate.ps1
+        echo "VIRTUAL_ENV=$env:VIRTUAL_ENV" >> $env:GITHUB_ENV
+        echo "$env:VIRTUAL_ENV\Scripts" >> $env:GITHUB_PATH
+
+    - name: Install project dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install -e .[dev]
+
+    - name: Show Python and package versions
+      run: |
+        python --version
+        pip --version
+        pip list
+
+    - name: Make scripts executable (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
+      run: chmod +x scripts/*.sh
+
+    - name: Build (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
+      run: ./scripts/build.sh
+
+    - name: Build (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Manual build steps for Windows
+        Write-Host "Building MCP Python Server on Windows..."
+        
+        # Code formatting check
+        Write-Host "Checking code formatting..."
+        ruff format --check src
+
+        # Linting
+        Write-Host "Running Ruff linter..."
+        ruff check src
+
+        # Type checking
+        Write-Host "Running MyPy type checker..."
+        mypy src
+
+        # Build packages
+        Write-Host "Building distribution packages..."
+        python -m build
+
+    - name: Test (Ubuntu)
+      if: matrix.os == 'ubuntu-24.04'
+      run: ./scripts/test.sh
+
+    - name: Test (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Manual test steps for Windows
+        Write-Host "Testing MCP Python Server on Windows..."
+        
+        # Create basic test file if it doesn't exist
+        if (!(Test-Path "tests")) {
+            New-Item -ItemType Directory -Path "tests"
+            @"
+"""Basic tests for MCP Python Example."""
+
+def test_imports():
+    """Test that main modules can be imported."""
+    from mcp_python_example import auth
+    from mcp_python_example.bin import mcp_server, launcher, token_manager, mcp_client
+    
+    assert auth is not None
+    assert mcp_server is not None
+    assert launcher is not None  
+    assert token_manager is not None
+    assert mcp_client is not None
+"@ | Out-File -FilePath "tests\test_basic.py" -Encoding UTF8
+        }
+        
+        # Run tests
+        pytest tests/ -v --tb=short
+        
+        # Test CLI tools
+        python -m mcp_python_example.bin.token_manager --help
+        python -m mcp_python_example.bin.launcher --help
+        python -m mcp_python_example.bin.mcp_server --help
+        python -m mcp_python_example.bin.mcp_client --help
+
+    - name: Build artifacts summary
+      run: |
+        echo "### Build Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        # Check if binaries work
+        if python -m mcp_python_example.bin.mcp_server --help > /dev/null 2>&1; then
+          echo "| mcp-server | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| mcp-server | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if python -m mcp_python_example.bin.launcher --help > /dev/null 2>&1; then
+          echo "| launcher | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| launcher | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if python -m mcp_python_example.bin.token_manager --help > /dev/null 2>&1; then
+          echo "| token-manager | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| token-manager | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if python -m mcp_python_example.bin.mcp_client --help > /dev/null 2>&1; then
+          echo "| mcp-client | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| mcp-client | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install safety bandit[toml]
+        python -m pip install -e .
+
+    - name: Run safety check
+      run: safety check --json
+
+    - name: Run bandit security linter
+      run: bandit -r src -f json
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pip-audit
+        python -m pip install -e .
+
+    - name: Run pip-audit
+      run: pip-audit --format=json
+      continue-on-error: true

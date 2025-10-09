@@ -1,0 +1,11 @@
+{
+	"servers": {
+		"pythonexam": {
+			"url": "http://127.0.0.1:8080/mcp",
+			"type": "http",
+			"headers": {
+				"Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTczMzY4NjQwMCwiZXhwIjo0MTAyNDQ0Nzk5LCJpc3MiOiJtY3AtcHl0aG9uLWV4YW1wbGUifQ.xNf8Fv_Kjuq1BzLMZgJSL-VgKx7gQnJcTx5BYwP_2xY"
+			}
+		}
+	}
+}

@@ -1,0 +1,35 @@
+# Production dependencies for mcp-python-example
+# Generated from pyproject.toml
+
+# Official MCP Python SDK
+mcp>=1.0.0
+
+# HTTP server dependencies  
+starlette>=0.27.0
+uvicorn>=0.31.1
+httpx>=0.27.1
+httpx-sse>=0.4.0
+
+# CLI and configuration
+click>=8.0.0
+configparser>=7.0.0
+
+# Authentication
+pyjwt>=2.8.0
+cryptography>=41.0.0
+
+# Date/time handling
+python-dateutil>=2.8.0
+
+# Async utilities
+anyio>=4.5.0
+
+# Data validation
+pydantic>=2.11.0
+pydantic-settings>=2.5.2
+
+# Logging and observability
+structlog>=24.1.0
+
+# Process management
+psutil>=5.9.0

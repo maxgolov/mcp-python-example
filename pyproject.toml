@@ -1,0 +1,108 @@
+[project]
+name = "mcp-python-example"
+version = "0.1.0"
+description = "MCP (Model Context Protocol) HTTP server implementation using the official Python SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Top-5", email = "top-5@noname.org" }]
+license = { text = "Apache-2.0" }
+keywords = ["mcp", "llm", "server", "http", "streamable"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    # Official MCP Python SDK
+    "mcp>=1.0.0",
+    # HTTP server dependencies  
+    "starlette>=0.27.0",
+    "uvicorn>=0.31.1",
+    "httpx>=0.27.1",
+    "httpx-sse>=0.4.0",
+    # CLI and configuration
+    "click>=8.0.0",
+    "configparser>=7.0.0",
+    # Authentication
+    "pyjwt>=2.8.0",
+    "cryptography>=41.0.0",
+    # Date/time handling
+    "python-dateutil>=2.8.0",
+    # Async utilities
+    "anyio>=4.5.0",
+    # Data validation
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.5.2",
+    # Logging and observability
+    "structlog>=24.1.0",
+    # Process management
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0", 
+    "pytest-cov>=4.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.0.0",
+]
+
+[project.scripts]
+mcp-server = "mcp_python_example.bin.mcp_server:main"
+launcher = "mcp_python_example.bin.launcher:main"
+token-manager = "mcp_python_example.bin.token_manager:main"
+mcp-client = "mcp_python_example.bin.mcp_client:main"
+
+[project.urls]
+Homepage = "https://github.com/top-5/mcp-python-example"
+Repository = "https://github.com/top-5/mcp-python-example"
+Issues = "https://github.com/top-5/mcp-python-example/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_python_example"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "UP",    # pyupgrade
+    "TCH",   # flake8-type-checking
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+# Handle editable installs and local packages
+namespace_packages = true
+explicit_package_bases = true
+# Look for type stubs in the source directory
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=src --cov-report=term-missing --cov-report=html"
+asyncio_mode = "auto"

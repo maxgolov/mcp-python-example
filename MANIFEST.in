@@ -1,0 +1,4 @@
+exclude .venv-linux
+exclude .venv
+exclude .venv-linux/*
+exclude .venv/*

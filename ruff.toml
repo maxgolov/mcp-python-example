@@ -1,0 +1,31 @@
+# Set the maximum line length to 120.
+line-length = 120
+
+# Exclude specific directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[lint]
+# Enable additional rules
+extend-select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # Pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+
+[lint.per-file-ignores]
+# Ignore specific rules for test files
+"tests/*" = ["F401"]  # Allow unused imports in tests
+
+[format]
+# Enable auto-formatting
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
