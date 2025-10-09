@@ -117,36 +117,40 @@ class McpExampleServer:
         logger.info("🔔 Sampling test requested - asking LLM to say 'Hi'")
 
         try:
-            # Get the request context
+            # Access the request context from the Server instance
             ctx = self.app.request_context
             
             # Request the client to perform LLM sampling
+            logger.info("📤 Sending sampling request to client...")
             sampling_result = await ctx.session.create_message(
                 messages=[
                     types.SamplingMessage(
                         role="user",
                         content=types.TextContent(
                             type="text",
-                            text="Please say 'Hi' in a friendly and creative way! Be brief (1-2 sentences)."
+                            text="Please say 'Hi' in a friendly and creative way! Also tell me what model you are. Be brief (1-2 sentences)."
                         )
                     )
                 ],
-                max_tokens=100,
+                max_tokens=150,
                 related_request_id=ctx.request_id,
             )
 
             # Extract the LLM's response
-            llm_response = sampling_result.content.text if sampling_result.content.type == "text" else str(sampling_result.content)
+            if sampling_result.content.type == "text":
+                llm_response = sampling_result.content.text
+            else:
+                llm_response = str(sampling_result.content)
             
-            logger.info(f"✅ LLM sampling successful: {llm_response}")
+            logger.info(f"✅ LLM sampling successful! Model: {sampling_result.model}")
 
             return [
                 types.TextContent(
                     type="text",
                     text=(
                         f"📡 MCP Sampling Test - SUCCESS!\n\n"
-                        f"🤖 I asked the LLM to say 'Hi', and here's what it said:\n\n"
-                        f"{llm_response}\n\n"
+                        f"Model used: {sampling_result.model}\n\n"
+                        f"🤖 LLM Response:\n{llm_response}\n\n"
                         f"✅ MCP sampling is working! The server successfully requested "
                         f"the client to perform an LLM inference."
                     ),
@@ -154,7 +158,7 @@ class McpExampleServer:
             ]
 
         except Exception as e:
-            logger.error(f"❌ Sampling failed: {e}")
+            logger.error(f"❌ Sampling failed: {e}", exc_info=True)
             return [
                 types.TextContent(
                     type="text",
@@ -162,7 +166,8 @@ class McpExampleServer:
                         f"❌ MCP Sampling Test - FAILED\n\n"
                         f"Error: {str(e)}\n\n"
                         f"Note: Sampling requires MCP client support. "
-                        f"Make sure your client supports the sampling feature."
+                        f"Make sure your client supports the sampling feature and "
+                        f"the server is properly initialized."
                     ),
                 )
             ]
