@@ -92,7 +92,7 @@ class McpExampleServer:
             ]
 
         @self.app.call_tool()  # type: ignore[misc]
-        async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.ContentBlock]:
+        async def call_tool(name: str, arguments: dict[str, Any], ctx: Any) -> list[types.ContentBlock]:
             """Handle tool calls."""
 
             if name == "increment":
@@ -107,31 +107,62 @@ class McpExampleServer:
                 return [types.TextContent(type="text", text="Counter reset to 0")]
 
             elif name == "test_sampling":
-                return await self._handle_sampling()
+                return await self._handle_sampling(ctx)
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
-    async def _handle_sampling(self) -> list[types.ContentBlock]:
-        """Handle MCP sampling test."""
-        logger.info("🔔 Sampling test requested")
+    async def _handle_sampling(self, ctx: Any) -> list[types.ContentBlock]:
+        """Handle MCP sampling test - asks the LLM to say 'Hi'."""
+        logger.info("🔔 Sampling test requested - asking LLM to say 'Hi'")
 
-        # For now, return a simple message indicating sampling would work
-        # In a full implementation, this would use the MCP sampling protocol
-        # to request the client to perform an LLM inference
-
-        return [
-            types.TextContent(
-                type="text",
-                text=(
-                    "📡 MCP Sampling Test (Mock Implementation)\n\n"
-                    "This tool demonstrates where MCP sampling would be used.\n"
-                    "In a full implementation, this would request the client\n"
-                    "to perform an LLM completion and return the results.\n\n"
-                    "✅ Sampling framework is ready for implementation!"
-                ),
+        try:
+            # Request the client to perform LLM sampling
+            sampling_result = await ctx.session.create_message(
+                messages=[
+                    types.SamplingMessage(
+                        role="user",
+                        content=types.TextContent(
+                            type="text",
+                            text="Please say 'Hi' in a friendly and creative way! Be brief (1-2 sentences)."
+                        )
+                    )
+                ],
+                max_tokens=100,
+                related_request_id=ctx.request_id,
             )
-        ]
+
+            # Extract the LLM's response
+            llm_response = sampling_result.content.text if sampling_result.content.type == "text" else str(sampling_result.content)
+            
+            logger.info(f"✅ LLM sampling successful: {llm_response}")
+
+            return [
+                types.TextContent(
+                    type="text",
+                    text=(
+                        f"📡 MCP Sampling Test - SUCCESS!\n\n"
+                        f"🤖 I asked the LLM to say 'Hi', and here's what it said:\n\n"
+                        f"{llm_response}\n\n"
+                        f"✅ MCP sampling is working! The server successfully requested "
+                        f"the client to perform an LLM inference."
+                    ),
+                )
+            ]
+
+        except Exception as e:
+            logger.error(f"❌ Sampling failed: {e}")
+            return [
+                types.TextContent(
+                    type="text",
+                    text=(
+                        f"❌ MCP Sampling Test - FAILED\n\n"
+                        f"Error: {str(e)}\n\n"
+                        f"Note: Sampling requires MCP client support. "
+                        f"Make sure your client supports the sampling feature."
+                    ),
+                )
+            ]
 
 
 # Web route handlers

@@ -4,7 +4,7 @@
 			"url": "http://127.0.0.1:8080/mcp",
 			"type": "http",
 			"headers": {
-				"Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTczMzY4NjQwMCwiZXhwIjo0MTAyNDQ0Nzk5LCJpc3MiOiJtY3AtcHl0aG9uLWV4YW1wbGUifQ.xNf8Fv_Kjuq1BzLMZgJSL-VgKx7gQnJcTx5BYwP_2xY"
+				"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTc2MDAwNDAyOCwiZXhwIjo0MTAyNDQ0Nzk5LCJpc3MiOiJtY3AtcHl0aG9uLWV4YW1wbGUifQ.OOmvjnFGQBCCKSVlGLFlYGo99D3p9NV56fC0jM9X160"
 			}
 		}
 	}
