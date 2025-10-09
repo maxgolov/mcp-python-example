@@ -80,6 +80,7 @@ jobs:
 
     - name: Build (Windows)
       if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
         # Manual build steps for Windows
         Write-Host "Building MCP Python Server on Windows..."
@@ -106,28 +107,9 @@ jobs:
 
     - name: Test (Windows)
       if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        # Manual test steps for Windows
         Write-Host "Testing MCP Python Server on Windows..."
-        
-        # Create basic test file if it doesn't exist
-        if (!(Test-Path "tests")) {
-            New-Item -ItemType Directory -Path "tests"
-            @"
-"""Basic tests for MCP Python Example."""
-
-def test_imports():
-    """Test that main modules can be imported."""
-    from mcp_python_example import auth
-    from mcp_python_example.bin import mcp_server, launcher, token_manager, mcp_client
-    
-    assert auth is not None
-    assert mcp_server is not None
-    assert launcher is not None  
-    assert token_manager is not None
-    assert mcp_client is not None
-"@ | Out-File -FilePath "tests\test_basic.py" -Encoding UTF8
-        }
         
         # Run tests
         pytest tests/ -v --tb=short
@@ -147,27 +129,27 @@ def test_imports():
         
         # Check if binaries work
         if python -m mcp_python_example.bin.mcp_server --help > /dev/null 2>&1; then
-          echo "| mcp-server | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+          echo "| mcp-server | OK Working |" >> $GITHUB_STEP_SUMMARY
         else
-          echo "| mcp-server | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| mcp-server | X Failed |" >> $GITHUB_STEP_SUMMARY
         fi
         
         if python -m mcp_python_example.bin.launcher --help > /dev/null 2>&1; then
-          echo "| launcher | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+          echo "| launcher | OK Working |" >> $GITHUB_STEP_SUMMARY
         else
-          echo "| launcher | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| launcher | X Failed |" >> $GITHUB_STEP_SUMMARY
         fi
         
         if python -m mcp_python_example.bin.token_manager --help > /dev/null 2>&1; then
-          echo "| token-manager | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+          echo "| token-manager | OK Working |" >> $GITHUB_STEP_SUMMARY
         else
-          echo "| token-manager | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| token-manager | X Failed |" >> $GITHUB_STEP_SUMMARY
         fi
         
         if python -m mcp_python_example.bin.mcp_client --help > /dev/null 2>&1; then
-          echo "| mcp-client | ✅ Working |" >> $GITHUB_STEP_SUMMARY
+          echo "| mcp-client | OK Working |" >> $GITHUB_STEP_SUMMARY
         else
-          echo "| mcp-client | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "| mcp-client | X Failed |" >> $GITHUB_STEP_SUMMARY
         fi
 
   security-audit:
